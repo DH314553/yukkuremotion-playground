@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCurrentFrame, Audio, staticFile } from 'remotion';
+import { useCurrentFrame, Audio, staticFile, Sequence } from 'remotion';
 import { Character } from '../components/Character';
 import { AutoVideoConfig } from '../../transcripts/autoVideo';
 
@@ -123,6 +123,7 @@ export const AutoVideo = () => {
   // ==========================================
   const audioTracks = [];
   const RemotionAudio = Audio as any;
+  const RemotionSequence = Sequence as any;
 
   for (let i = 0; i < talks.length; i++) {
     const talk = talks[i];
@@ -133,34 +134,35 @@ export const AutoVideo = () => {
     if (!cleanPath.startsWith('/')) cleanPath = `/${cleanPath}`;
     const audioUrl = staticFile(cleanPath);
 
+    const duration = timeline.endFrame - timeline.startFrame;
+
     audioTracks.push(
-      <RemotionAudio
+      <RemotionSequence
         key={`audio-track-yukkuri-${i}`}
-        src={audioUrl}
+        from={timeline.startFrame}
+        durationInFrames={duration}
+      >
+        <RemotionAudio
+          src={audioUrl}
 
-        // --------------------------------------------------
-        // ① 動画のタイムライン上の配置・ずらし制御（★最重要）
-        // --------------------------------------------------
-        // fromFramesMap から抽出した各WAV固有の絶対開始位置（0, 35, 150...）へ正確にずらして配置
-        startInComposition={timeline.startFrame} 
+          // --------------------------------------------------
+          // ① 音声ファイル自体のトリミング制御
+          // --------------------------------------------------
+          startFrom={0}                     // 音声ファイルの先頭（0秒目）からピュアに再生
 
-        // --------------------------------------------------
-        // ② 音声ファイル自体のトリミング制御
-        // --------------------------------------------------
-        startFrom={0}                     // 音声ファイルの先頭（0秒目）からピュアに再生
+          // --------------------------------------------------
+          // ② 再生終了位置
+          // --------------------------------------------------
+          // 次のWAVが始まるタイムスタンプで再生をきれいにカット（音声の被りを完全防止）
+          endAt={duration}
 
-        // --------------------------------------------------
-        // ③ 再生終了位置
-        // --------------------------------------------------
-        // 次のWAVが始まるタイムスタンプで再生をきれいにカット（音声の被りを完全防止）
-        endAt={timeline.endFrame}
-
-        // --------------------------------------------------
-        // ④ 音質固定オプション
-        // --------------------------------------------------
-        playbackRate={1.0}
-        volume={1.0}
-      />
+          // --------------------------------------------------
+          // ③ 音質固定オプション
+          // --------------------------------------------------
+          playbackRate={1.0}
+          volume={1.0}
+        />
+      </RemotionSequence>
     );
   }
 

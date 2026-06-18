@@ -97,10 +97,18 @@ async function buildTalk(talk, index, scriptDir) {
     fs.mkdirSync(publicAudioDir, { recursive: true });
   }
 
+  const srcAudioDir = path.resolve(scriptDir, '../src/assets/audio');
+  if (!fs.existsSync(srcAudioDir)) {
+    fs.mkdirSync(srcAudioDir, { recursive: true });
+  }
+
   const absoluteAudioPath = path.join(publicAudioDir, `${index}.wav`);
+  const srcAudioPath = path.join(srcAudioDir, `${index}.wav`);
   const publicAudioPath = `/assets/audio/${index}.wav`;
 
   await generateVoice(talk.text, speaker, absoluteAudioPath);
+  fs.copyFileSync(absoluteAudioPath, srcAudioPath);
+
   const mouthData = createMouthFrames(absoluteAudioPath, FPS);
 
   return {
