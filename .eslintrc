@@ -1,0 +1,7 @@
+{
+	"extends": "@remotion",
+	"rules": {
+		"@typescript-eslint/camelcase": "off",
+		"camelcase": "off"
+	}
+}

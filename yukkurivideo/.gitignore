@@ -1,0 +1,36 @@
+# 依存関係・ビルド・圧縮ファイル
+node_modules/
+out/
+dist/
+*.zip
+package-lock.json
+.env
+
+# プロジェクトルート直下、およびサブディレクトリ内のパーツフォルダを厳密に除外
+face/
+**/face/
+eye/
+**/eye/
+mouth/
+**/mouth/
+body/
+**/body/
+
+# その他のアセット・素材フォルダの完全除外
+public/image/
+public/audio/
+yukkurivideo/assets/
+yukkurivideo/src/public/
+*sozai*
+public/seya.png
+
+# すべてのメディア拡張子のブロック
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp3
+*.wav
+*.m4a
+*.mp4
+*.ttf

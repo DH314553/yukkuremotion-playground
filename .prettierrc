@@ -1,0 +1,14 @@
+{
+	"singleQuote": true,
+	"bracketSpacing": false,
+	"jsxBracketSameLine": false,
+	"useTabs": false,
+	"overrides": [
+		{
+			"files": ["*.yml"],
+			"options": {
+				"singleQuote": false
+			}
+		}
+	]
+}
