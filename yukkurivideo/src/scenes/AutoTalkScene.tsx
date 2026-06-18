@@ -19,8 +19,17 @@ const TalkSlide = ({ talk, sectionTitle }: { talk: any; sectionTitle: string }) 
   // ownCurrentTimeMs を 30 fps のフレーム数に変換
   const frame = Math.floor((ownCurrentTimeMs / 1000) * 30);
 
-  const durationFrames = talk.audioDurationFrames || 180;
-  const durationSeconds = durationFrames / 30;
+  // 1フレーム単位の再生遅延（ディレイ）の取得
+  const delayFrames = talk.delayFrames || 0;
+  
+  // 実際に声が再生されている間のフレーム位置（ディレイ完了後）
+  const speakingFrame = Math.max(0, frame - delayFrames);
+
+  const audioDurationFrames = talk.audioDurationFrames || 180;
+  
+  // 総再生時間 = 音声自体のフレーム数 + 開始前の遅延フレーム数
+  const totalFrames = audioDurationFrames + delayFrames;
+  const durationSeconds = totalFrames / 30;
 
   const isReimu = talk.speaker === 'reimu';
   const isMarisa = talk.speaker === 'marisa';
@@ -28,21 +37,22 @@ const TalkSlide = ({ talk, sectionTitle }: { talk: any; sectionTitle: string }) 
 
   // 👄 mouthAmplitude データ（音声解析による波形）に基づいて滑らかな口パク量を計算
   const getMouthOpenValue = (isSpeaking: boolean): number => {
-    if (!isSpeaking || frame < 0) return 0;
-    const remainingFrames = durationFrames - frame;
+    // まだ再生開始遅延の期間中である場合は口を動かさない
+    if (!isSpeaking || frame < delayFrames) return 0;
+    const remainingFrames = totalFrames - frame;
     
     let baseMouth = 0;
-    if (talk && talk.mouthAmplitude && talk.mouthAmplitude[frame] !== undefined) {
-      baseMouth = talk.mouthAmplitude[frame];
+    if (talk && talk.mouthAmplitude && talk.mouthAmplitude[speakingFrame] !== undefined) {
+      baseMouth = talk.mouthAmplitude[speakingFrame];
     } else {
       // フォールバック: 自然に聞こえる正弦波を作り、0-10のレンジにスケール
-      baseMouth = Math.abs(Math.sin(frame * 0.42)) * 10;
+      baseMouth = Math.abs(Math.sin(speakingFrame * 0.42)) * 10;
     }
 
     // セリフ終了の5フレーム前からスムーズに口を閉じるフェードアウト
     if (remainingFrames < 5 && remainingFrames > 0) {
       baseMouth = baseMouth * (remainingFrames / 5);
-    } else if (frame > durationFrames - 2) {
+    } else if (speakingFrame > audioDurationFrames - 2) {
       return 0;
     }
 
@@ -68,6 +78,8 @@ const TalkSlide = ({ talk, sectionTitle }: { talk: any; sectionTitle: string }) 
   if (cleanPath.startsWith('../')) cleanPath = cleanPath.substring(2);
   if (!cleanPath.startsWith('/')) cleanPath = `/${cleanPath}`;
 
+  const hasDelay = delayFrames > 0;
+
   return (
     <Timegroup
       ref={ref}
@@ -86,7 +98,16 @@ const TalkSlide = ({ talk, sectionTitle }: { talk: any; sectionTitle: string }) 
         <Background />
 
         {/* 🔊 Editframe タイムライン上に音声トラックを配置 */}
-        <Audio src={cleanPath} volume={1.0} />
+        {hasDelay ? (
+          // 遅延指定がある場合、シークエンスモードを使ってディレイ秒数の空スペースの後に配置
+          <Timegroup mode="sequence">
+            <Timegroup mode="fixed" duration={`${delayFrames / 30}s`} />
+            <Audio src={cleanPath} volume={1.0} />
+          </Timegroup>
+        ) : (
+          // 遅延がない場合はそのまま配置
+          <Audio src={cleanPath} volume={1.0} />
+        )}
 
         <div
           style={{
@@ -105,9 +126,9 @@ const TalkSlide = ({ talk, sectionTitle }: { talk: any; sectionTitle: string }) 
         {/* Reimu */}
         <Character
           character="reimu"
-          speaking={isReimu || isBoth}
+          speaking={(isReimu || isBoth) && frame >= delayFrames}
           mouthOpen={reimuMouthOpen}
-          speakingFrame={isReimu || isBoth ? frame : 0}
+          speakingFrame={isReimu || isBoth ? speakingFrame : 0}
           x={50}
           y={180}
           blink={isReimuBlinking}
@@ -116,9 +137,9 @@ const TalkSlide = ({ talk, sectionTitle }: { talk: any; sectionTitle: string }) 
         {/* Marisa */}
         <Character
           character="marisa"
-          speaking={isMarisa || isBoth}
+          speaking={(isMarisa || isBoth) && frame >= delayFrames}
           mouthOpen={marisaMouthOpen}
-          speakingFrame={isMarisa || isBoth ? frame : 0}
+          speakingFrame={isMarisa || isBoth ? speakingFrame : 0}
           x={1250}
           y={180}
           blink={isMarisaBlinking}
