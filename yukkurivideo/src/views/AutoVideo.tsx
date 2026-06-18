@@ -82,11 +82,11 @@ export const AutoVideo = () => {
     const remainingFrames = totalDuration - speakingFrame;
     
     let baseMouth = 0;
-    if (talk && talk.mouthFrames && talk.mouthFrames[speakingFrame] !== undefined) {
-      baseMouth = talk.mouthFrames[speakingFrame];
+    if (talk && talk.mouthAmplitude && talk.mouthAmplitude[speakingFrame] !== undefined) {
+      baseMouth = talk.mouthAmplitude[speakingFrame];
     } else {
-      // 自然に聞こえる周期（0.35〜0.45）で綺麗な正弦波を作り、口パクを滑らかに補間
-      baseMouth = Math.abs(Math.sin(speakingFrame * 0.42)) * 0.85;
+      // 自然に聞こえる周期（0.35〜0.45）で綺麗な正弦波を作り、口パクを滑らかに補間 (0-10にスケール)
+      baseMouth = Math.abs(Math.sin(speakingFrame * 0.42)) * 10;
     }
 
     // セリフ終了の5フレーム前から徐々に口を閉じるスムーズ減衰
