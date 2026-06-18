@@ -14,14 +14,25 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const FPS = 30;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+let GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+if (GEMINI_MODEL === 'gemini-2.0-flash') {
+  console.log(`⚠️  gemini-2.0-flash is discontinued on Vertex AI. Automatically switching to gemini-2.5-flash.`);
+  GEMINI_MODEL = 'gemini-2.5-flash';
+}
+
+const scriptDir = path.dirname(new URL(import.meta.url).pathname);
+const keyPath = path.resolve(scriptDir, '../gcp-key.json');
 
 // ==========================================
 // 💡 Google Cloud クレジット消費用初期化ロジック
 // ==========================================
 const ai = new GoogleGenAI({
+  vertexai: true,
   project: 'myproject314-459102',
-  location: 'asia-northeast1'
+  location: 'asia-northeast1',
+  googleAuthOptions: {
+    keyFilename: keyPath
+  }
 });
 
 function durationFrames(mouthFrames) {
@@ -108,7 +119,6 @@ async function main() {
 
   let transcript;
 
-  const scriptDir = path.dirname(new URL(import.meta.url).pathname);
   const transcriptPath = path.resolve(scriptDir, '../transcript.json');
 
   if (usePromptMode || !fs.existsSync(transcriptPath)) {
