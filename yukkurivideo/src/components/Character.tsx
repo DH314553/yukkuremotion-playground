@@ -109,7 +109,7 @@ export const Character = ({
       style={{
         position: 'absolute',
         left: x,
-        top: y,
+        top: y + (speakingFrame > 0 ? Math.abs(Math.sin(speakingFrame * 0.25)) * -10 : 0),
         width: 620,
         height: 860,
         zIndex: 50,
